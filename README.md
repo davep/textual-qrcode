@@ -63,4 +63,24 @@ display something else. For example:
 self.query_one( QRCode ).encode( "Now I've changed it to this" )
 ```
 
+The widget will send out one of two messages when an attempt is made to
+encode some content. If the content was encoded fine a `QRCode.Encoded`
+message is sent out, which can be caught like this:
+
+```python
+def on_qrcode_encoded( self, event: QRCode.Encoded ) -> None:
+    # Do something now that the QR code was updated fine.
+```
+
+If there is an error encoding the content `QRCode.Error` will be sent out.
+this can be used like this:
+
+```python
+def on_qrcode_error( self, event: QRCode.Error ) -> None:
+    # Do something about the error.
+```
+
+In both cases the event sent out has a `qr_code` property which is the
+`QRCode` widget involved.
+
 [//]: # (README.md ends here)
