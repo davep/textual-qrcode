@@ -81,8 +81,8 @@ class QRCode( Widget ):
 
     async def _get_qr_code( self ) -> None:
         """Get the QR code from the website."""
-        async with httpx.AsyncClient() as client:
 
+        async with httpx.AsyncClient() as client:
             try:
                 response = await client.get(
                     f"https://qrenco.de/{quote( self.encoded_content.strip() )}",
@@ -91,18 +91,17 @@ class QRCode( Widget ):
             except httpx.RequestError as error:
                 self.emit_no_wait( self.Error( error, self ) )
                 return
-
             try:
                 response.raise_for_status()
             except httpx.HTTPStatusError as error:
                 self.emit_no_wait( self.Error( error, self ) )
                 return
+            self._qr_code = response.text.splitlines()
 
-            self._qr_code      = response.text.splitlines()
-            self.styles.width  = len( self._qr_code[ 0 ] )
-            self.styles.height = len( self._qr_code )
-            self.emit_no_wait( self.Encoded( self ) )
-            self.refresh()
+        self.styles.width  = len( self._qr_code[ 0 ] )
+        self.styles.height = len( self._qr_code )
+        self.emit_no_wait( self.Encoded( self ) )
+        self.refresh()
 
     def render( self ) -> RenderResult:
         """Render the QR code.
