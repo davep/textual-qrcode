@@ -55,15 +55,18 @@ class QRCode( Widget ):
         """str: The content that was encoded in the QR code."""
         return self._content
 
-    class Encoded( Message ):
-        """A message sent when the content was encoded without a problem."""
+    class _Message( Message ):
+        """Base message sent out by the QR code widget."""
 
         @property
         def qr_code( self ) -> "QRCode":
             """QRCode: The QR code widget sending the message."""
             return cast( QRCode, self.sender )
 
-    class Error( Message ):
+    class Encoded( _Message ):
+        """A message sent when the content was encoded without a problem."""
+
+    class Error( _Message ):
         """A message sent when there was an error encoding the content.
 
         Attributes:
