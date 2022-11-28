@@ -2,7 +2,7 @@
 
 ##############################################################################
 # Python imports.
-from typing       import Any
+from typing       import Any, cast
 from urllib.parse import quote
 
 ##############################################################################
@@ -11,8 +11,9 @@ import httpx
 
 ##############################################################################
 # Textual imports.
-from textual.app      import RenderResult
-from textual.widget   import Widget
+from textual.app     import RenderResult
+from textual.widget  import Widget
+from textual.message import Message
 
 ##############################################################################
 class QRCode( Widget ):
@@ -25,6 +26,9 @@ class QRCode( Widget ):
     display, will change width and height depending on the data it is asked
     to display.
     """
+
+    DEFAULT_CSS = """QRCode { width: 0; height: 0; }"""
+    """str: The default CSS for the widget."""
 
     def __init__( self, text: str, *args: Any, **kwargs: Any ) -> None:
         """Initialise the QR code widget.
@@ -51,17 +55,53 @@ class QRCode( Widget ):
         """str: The content that was encoded in the QR code."""
         return self._content
 
+    class Encoded( Message ):
+        """A message sent when the content was encoded without a problem."""
+
+        @property
+        def qr_code( self ) -> "QRCode":
+            """QRCode: The QR code widget sending the message."""
+            return cast( QRCode, self.sender )
+
+    class Error( Message ):
+        """A message sent when there was an error encoding the content.
+
+        Attributes:
+            error (Exception): The exception that is the cause of the error.
+        """
+
+        def __init__( self, error: Exception, *args: Any, **kwargs: Any ) -> None:
+            """Initialise the error message.
+
+            Args:
+                error (Exception): The exception that describes the error.
+            """
+            super().__init__( *args, **kwargs )
+            self.error = error
+
     async def _get_qr_code( self ) -> None:
         """Get the QR code from the website."""
         async with httpx.AsyncClient() as client:
-            response = await client.get(
-                f"https://qrenco.de/{quote( self.encoded_content.strip() )}",
-                headers={ "user-agent": "textual-qrcode (curl)" }
-            )
-            # TODO: Error checking and stuff.
+
+            try:
+                response = await client.get(
+                    f"https://qrenco.de/{quote( self.encoded_content.strip() )}",
+                    headers={ "user-agent": "textual-qrcode (curl)" }
+                )
+            except httpx.RequestError as error:
+                self.emit_no_wait( self.Error( error, self ) )
+                return
+
+            try:
+                response.raise_for_status()
+            except httpx.HTTPStatusError as error:
+                self.emit_no_wait( self.Error( error, self ) )
+                return
+
             self._qr_code      = response.text.splitlines()
             self.styles.width  = len( self._qr_code[ 0 ] )
             self.styles.height = len( self._qr_code )
+            self.emit_no_wait( self.Encoded( self ) )
             self.refresh()
 
     def render( self ) -> RenderResult:
