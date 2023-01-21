@@ -11,12 +11,11 @@ import httpx
 
 ##############################################################################
 # Textual imports.
-from textual.app     import RenderResult
-from textual.widget  import Widget
+from textual.widgets import Static
 from textual.message import Message
 
 ##############################################################################
-class QRCode( Widget ):
+class QRCode( Static ):
     """A simple text-based QR code widget.
 
     **NOTE:** This is a wrapper around https://qrenco.de/ -- anything you
@@ -48,7 +47,7 @@ class QRCode( Widget ):
         """
         self._content = text
         self._qr_code = []
-        self.refresh()
+        self.call_later( self._get_qr_code )
 
     @property
     def encoded_content( self ) -> str:
@@ -104,22 +103,6 @@ class QRCode( Widget ):
         self.styles.width  = len( self._qr_code[ 0 ] )
         self.styles.height = len( self._qr_code )
         self.emit_no_wait( self.Encoded( self ) )
-        self.refresh()
-
-    def render( self ) -> RenderResult:
-        """Render the QR code.
-
-        Returns:
-            RenderResult: The QR code content for rendering.
-        """
-        # We're being asked to render the QR code; but it's possible we've
-        # not gone out and got it yet...
-        if not self._qr_code:
-            # Yup, we've not requested it yet. Let's set up a call to get it
-            # and then when we swing by here again later we won't end up in
-            # here because we'll have it.
-            self.call_later( self._get_qr_code )
-        # Render the result.
-        return "\n".join( self._qr_code )
+        self.update( "\n".join( self._qr_code ) )
 
 ### qrcode.py ends here
