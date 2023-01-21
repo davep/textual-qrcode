@@ -47,7 +47,7 @@ setup(
     packages                      = find_packages(),
     package_data                  = { "textual_qrcode": [ "py.typed" ] },
     include_package_data          = True,
-    install_requires              = [ "textual", "httpx" ],
+    install_requires              = [ "textual==0.10.1", "httpx" ],
     python_requires               = ">=3.9",
     keywords                      = "library widget textual qrcode",
     license                       = (
