@@ -91,18 +91,18 @@ class QRCode( Static ):
                     headers={ "user-agent": "textual-qrcode (curl)" }
                 )
             except httpx.RequestError as error:
-                self.emit_no_wait( self.Error( error, self ) )
+                self.post_message_no_wait( self.Error( error, self ) )
                 return
             try:
                 response.raise_for_status()
             except httpx.HTTPStatusError as error:
-                self.emit_no_wait( self.Error( error, self ) )
+                self.post_message_no_wait( self.Error( error, self ) )
                 return
             self._qr_code = response.text.splitlines()
 
         self.styles.width  = len( self._qr_code[ 0 ] )
         self.styles.height = len( self._qr_code )
-        self.emit_no_wait( self.Encoded( self ) )
+        self.post_message_no_wait( self.Encoded( self ) )
         self.update( "\n".join( self._qr_code ) )
 
 ### qrcode.py ends here
